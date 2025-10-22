@@ -25,6 +25,7 @@ jobs:
       - msrv
       - android
       - wasm
+      - wasi
       - docs
     steps:
       - run: exit 0
@@ -367,3 +368,30 @@ jobs:
 
       - name: Wasm-pack test chrome
         run: wasm-pack test --headless --chrome
+
+  wasi:
+    name: WASI
+    needs: [style]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - name: Install wasmtime
+        uses: bytecodealliance/actions/wasmtime/setup@v1
+
+      - name: Check
+        run: cargo check --target wasm32-wasip2
+
+      - name: Check cookies
+        run: cargo check --target wasm32-wasip2
+
+      - name: Test
+        run: cargo test --target wasm32-wasip2
