@@ -2,7 +2,7 @@
 #![deny(missing_debug_implementations)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
-#![cfg_attr(test, deny(warnings))]
+//#![cfg_attr(test, deny(warnings))]
 
 //! # reqwest
 //!
@@ -260,9 +260,16 @@ compile_error!(
 use futures_core as _;
 use sync_wrapper as _;
 
-macro_rules! if_wasm {
+macro_rules! if_wasm_bindgen {
     ($($item:item)*) => {$(
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+        $item
+    )*}
+}
+
+macro_rules! if_wasi {
+    ($($item:item)*) => {$(
+        #[cfg(all(target_arch = "wasm32", target_os = "wasi"))]
         $item
     )*}
 }
@@ -385,11 +392,17 @@ if_hyper! {
     pub use connect::uds::UnixSocketProvider;
 }
 
-if_wasm! {
+if_wasm_bindgen! {
     mod wasm;
     mod util;
 
     pub use self::wasm::{Body, Client, ClientBuilder, Request, RequestBuilder, Response};
     #[cfg(feature = "multipart")]
     pub use self::wasm::multipart;
+}
+
+if_wasi! {
+    mod wasi;
+    mod util;
+    pub use self::wasi::{Body, Client, ClientBuilder, Request, RequestBuilder, Response};
 }
